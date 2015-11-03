@@ -14,7 +14,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include <map>
-
+#include <cstring>
 // This class provides time based leases to a Buddy Allocator memory manager
 // https://en.wikipedia.org/wiki/Buddy_memory_allocation
 //
