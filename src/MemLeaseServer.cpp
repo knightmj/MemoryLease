@@ -55,9 +55,7 @@ int main(int argc, const char * argv[])
                 printf("lease\n");
                 LeaseMessage_t leaseMessage = MemProtocol::ReadLeaseMessage(*msg);
                 int lease = container.RequestLease(leaseMessage.leaseSize, leaseMessage.leasedDuration);
-                 printf("lease\n");
                 PackedMessage_t leasedMessage = MemProtocol::CreateLeasedMessage(lease);
-                printf("lease\n");
                 server.Write(leasedMessage);
             }
                 break;
