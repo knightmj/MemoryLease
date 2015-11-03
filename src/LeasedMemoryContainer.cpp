@@ -34,7 +34,6 @@ BuddyNode_t* FindBuddy(BuddyNode_t * cur, long size)
     if (cur->allocated)
         return NULL;
     
-    
     //has this node been split
     //if so keep searching left and right
     if (cur->IsSplit())
@@ -61,7 +60,7 @@ BuddyNode_t* FindBuddy(BuddyNode_t * cur, long size)
     {
         //we need to split!
         cur->left = new BuddyNode_t(cur->memory,cur->size/2,false,cur);
-        cur->right = new BuddyNode_t(cur->memory,cur->size/2,false,cur);
+        cur->right = new BuddyNode_t(cur->memory + cur->size/2,cur->size/2,false,cur);
         
         return FindBuddy(cur->left, size);
     }
@@ -146,7 +145,7 @@ int LeasedMemoryContainer::SetMemory(char* mem,
         return -1;
     
     //does this lease match the expected lease size?
-    if (this->leaseLookup[leaseId].size != size)
+    if (this->leaseLookup[leaseId].size < size)
         return -2;
     
     memcpy(this->leaseLookup[leaseId].node->memory, mem, size);
@@ -174,8 +173,9 @@ int LeasedMemoryContainer::CleanLeases()
     
     while (it != this->leaseLookup.end())
     {
-        time_t end = it->second.start + it->second.duration;
-        if (time(NULL) > end)
+        time_t end = (it->second.start*1000) + it->second.duration;
+        time_t cur = time(NULL);
+        if (cur*1000 > end)
             removedLeases.push_back(it->first);
         it++;
     }
@@ -184,7 +184,7 @@ int LeasedMemoryContainer::CleanLeases()
     for (size_t i =0; i < removedLeases.size(); i++)
     {
         int lease = removedLeases[i];
-        
+        printf("removing expired lease %d\n",lease);
         this->leaseLookup[lease].node->allocated = false;
         CompressUp(this->leaseLookup[lease].node);
         map<int,MemoryLease_t>::iterator it = this->leaseLookup.find(lease);

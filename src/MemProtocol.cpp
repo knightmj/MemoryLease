@@ -53,16 +53,22 @@ PackedMessage_t MemProtocol::CreateLeaseMessage(int leaseSize,int leaseDuration)
     
     memcpy(payload, &leaseSize, sizeof(int));
     memcpy(payload+sizeof(int), &leaseDuration, sizeof(int));
-    return CreateMessage(Lease, payload, sizeof(int));
+    return CreateMessage(Lease, payload, sizeof(int) + sizeof(int));
 }
 PackedMessage_t MemProtocol::CreateDataMessage(const char *buffer, long bufferSize, int leaseId, MessageType type)
 {
-    long size = sizeof(long) + bufferSize;
+    long size = sizeof(int) + sizeof(long) + bufferSize;
     char * payload = new char[size];
+    int offset = 0 ;
     
-    memcpy(payload,buffer,leaseId);
-    memcpy(payload +sizeof(long),buffer,bufferSize);
-
+    memcpy(payload,&leaseId,sizeof(int));
+    offset+= sizeof(int);
+    
+    memcpy(payload +offset,&bufferSize,sizeof(long));
+    offset += sizeof(long);
+    
+    memcpy(payload +offset,buffer,bufferSize);
+    
     return CreateMessage(type, payload, size);
 }
 AccessDataMessage_t MemProtocol::ReadAccessMessage(PackedMessage_t message)
@@ -77,6 +83,8 @@ LeaseMessage_t MemProtocol::ReadLeaseMessage(PackedMessage_t message)
     int offset = MESSAGE_OVERHEAD;//skip type and size
     LeaseMessage_t lm;
     memcpy(&lm.leaseSize, message.buffer +offset, sizeof(int));
+    offset+= sizeof(int);
+    memcpy(&lm.leasedDuration, message.buffer +offset, sizeof(int));
     return lm;
 }
 LeasedMessage_t MemProtocol::ReadLeasedMessage(PackedMessage_t message)
@@ -95,19 +103,20 @@ DataSetMessage_t MemProtocol::ReadDataSetMessage(PackedMessage_t message)
 }
 DataMessage_t MemProtocol::ReadDataMessage(PackedMessage_t message)
 {
-    int offset = PACKET_SIZE_OFFSET;//skip type
+    int offset = MESSAGE_OVERHEAD;//skip type
     DataMessage_t dm;
-    int size;
     
     //copy the packet
     memcpy(&dm.leaseId, message.buffer +offset, sizeof(int));
     offset += sizeof(int);
     
-    memcpy(&size, message.buffer +offset, sizeof(int));
-    dm.bufferSize = size - sizeof(int);
-    offset += sizeof(int);
-    
-    memcpy(&dm.bufferSize, message.buffer +offset, dm.bufferSize);
-    
+    memcpy(&dm.bufferSize, message.buffer +offset, sizeof(long));
+    offset += sizeof(long);
+    dm.buffer = NULL;
+    if (dm.bufferSize >0)
+    {
+        dm.buffer = new char[dm.bufferSize];
+        memcpy(dm.buffer, message.buffer +offset, dm.bufferSize);
+    }
     return dm;
 }

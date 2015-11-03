@@ -44,13 +44,13 @@ int main(int argc, const char * argv[]) {
     port = atoi(argv[2]);
     command = argv[3];
     value = atoi(argv[4]);
-    if (argc >5)
+    if (argc > 5)
         data = argv[5];
     
     bool ok = strcmp("lease", command) == 0 || strcmp("get", command) == 0 || strcmp("set", command) == 0;
     if (!ok)
     {
-        printf("unknown command:%s",command);
+        printf("unknown command:%s\n",command);
         exit(0);
     }
     
@@ -58,7 +58,7 @@ int main(int argc, const char * argv[]) {
     if (err <0)
     {
         if (err == -2)
-            printf("Unable to resolve host");
+            printf("Unable to resolve host\n");
         else
             printf("Error connecting: %s (%d)\n",strerror(errno),errno);
         exit(err);
@@ -68,18 +68,18 @@ int main(int argc, const char * argv[]) {
         int duration = atoi(data);
         PackedMessage_t lease = MemProtocol::CreateLeaseMessage(value, duration);
         client.Write(lease);
-        PackedMessage_t leasedMessage  = client.ReadMessage();
+        PackedMessage_t leasedMessage = client.ReadMessage();
         LeasedMessage_t lm =  MemProtocol::ReadLeasedMessage(leasedMessage);
         if (lm.leaseId >0)
         {
-            printf("You have leased %d bytes for %d MS with id %d",
+            printf("You have leased %d bytes for %d MS with id %d\n",
                    value,
                    duration,
                    lm.leaseId);
         }
         else
         {
-            printf("Failed to create lease due to insufficient resources on the server.");
+            printf("Failed to create lease due to insufficient resources on the server.\n");
         }
         
     }
@@ -89,18 +89,22 @@ int main(int argc, const char * argv[]) {
         client.Write(access);
         PackedMessage_t pm  = client.ReadMessage();
         DataMessage_t dm = MemProtocol::ReadDataMessage(pm);
-        printf("Data get for lease %d: %s",value,dm.buffer);
+        if (dm.buffer)
+            printf("Data get for lease %d: %s\n",value,dm.buffer);
+        else
+            printf("Data not found for %d.\n",value);
+        
     }
     if (strcmp("set", command) == 0)
     {
-        PackedMessage_t access = MemProtocol::CreateDataMessage(data, strlen(data), value, SetData);
+        PackedMessage_t access = MemProtocol::CreateDataMessage(data, strlen(data)+1, value, SetData);
         client.Write(access);
         PackedMessage_t pm  = client.ReadMessage();
         DataSetMessage_t dm = MemProtocol::ReadDataSetMessage(pm);
         if (dm.error >= 0)
-            printf("Data set for lease %d",value);
+            printf("Data set for lease %d\n",value);
         else
-            printf("Error: unable set for lease %d (%d)",value,dm.error);
+            printf("Error: unable set for lease %d (%d)\n",value,dm.error);
     }
     
     return 0;

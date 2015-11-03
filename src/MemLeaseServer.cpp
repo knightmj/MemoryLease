@@ -52,14 +52,18 @@ int main(int argc, const char * argv[])
         switch (msg->Type()) {
             case Lease:
             {
+                printf("lease\n");
                 LeaseMessage_t leaseMessage = MemProtocol::ReadLeaseMessage(*msg);
                 int lease = container.RequestLease(leaseMessage.leaseSize, leaseMessage.leasedDuration);
+                 printf("lease\n");
                 PackedMessage_t leasedMessage = MemProtocol::CreateLeasedMessage(lease);
+                printf("lease\n");
                 server.Write(leasedMessage);
             }
                 break;
             case AccessData:
             {
+                printf("access\n");
                 //the client would like to get data for this lease
                 AccessDataMessage_t accessMessage = MemProtocol::ReadAccessMessage(*msg);
                 char * mem;
@@ -71,6 +75,7 @@ int main(int argc, const char * argv[])
                 break;
             case SetData:
             {
+                printf("set\n");
                 DataMessage_t dm = MemProtocol::ReadDataMessage(*msg);
                 int error = container.SetMemory(dm.buffer, dm.bufferSize, dm.leaseId);
                 PackedMessage_t pm = MemProtocol::CreateDataSetMessage(error);

@@ -56,11 +56,11 @@ typedef struct PackedMessage
     }
     int Type()
     {
-        return (int) (*buffer);
+        return  *((int*)buffer);
     }
-    int Size()
+    long Size()
     {
-        return (*(buffer+PACKET_SIZE_OFFSET));
+        return *((long*)(buffer+PACKET_SIZE_OFFSET));
     }
     void AppendData(char * data, long size)
     {
