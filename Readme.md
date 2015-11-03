@@ -38,7 +38,7 @@ The client accepts a series of command line arguments
             set: set memory for the provided lease id. (Note: set requires data argument)
 
 ##### example run:
-#lease some memory from the server
+lease some memory from the server
 
     client localhost 412 lease 1024 5000
     >You have leased 1024 bytes for 5000 MS with id 123
