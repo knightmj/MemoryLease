@@ -156,6 +156,9 @@ int LeasedMemoryContainer::GetMemory(char** mem,
                                      long &size,
                                      int leaseId)
 {
+    (*mem) = NULL;
+    size = 0;
+
     //is this lease still active?
     if (this->leaseLookup.find(leaseId) == this->leaseLookup.end())
         return -1;
