@@ -86,7 +86,9 @@ int main(int argc, const char * argv[])
 
     if (strcmp("lease", command) == 0)
     {
-        int duration = atoi(data);
+        int duration = 5000;
+        if (data)
+            duration = atoi(data);
         PackedMessage_t lease = MemProtocol::CreateLeaseMessage(value, duration);
         client.Write(lease);
         PackedMessage_t leasedMessage = client.ReadMessage();
