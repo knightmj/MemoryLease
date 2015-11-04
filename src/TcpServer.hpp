@@ -21,10 +21,22 @@
 class TcpServer
 {
 public:
+    // start a server 
+    // port: port to bind to
     int Start(int port);
+    // Listen for an incoming connection
+    // returns: id for the socket connectin
     int Listen();
+
+    // read a packed message from the server
+    // return: A valid packed message or NULL if the client fails 
+    // to send a a valid message.
     PackedMessage_t* ReadMessage();
+    
+    // write a message to the client
+    // returns: number of bytes written
     long Write(PackedMessage_t message);
+    
     ~TcpServer();
 private:
     int _socketFileDescriptor;
