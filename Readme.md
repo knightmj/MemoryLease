@@ -9,6 +9,7 @@ Memory Lease can be built with `make` and the provide Makeflile assuming g++ is 
     >mkdir -p bin
     >g++ -o bin/server src/MemLeaseServer.cpp src/MemProtocol.cpp src/TcpServer.cpp src/LeasedMemoryContainer.cpp
     >g++ -o bin/client src/MemLeaseClient.cpp src/MemProtocol.cpp src/TcpClient.cpp
+
 # Running MemoryLease
 MemoryLese is a client and a server so you must first start the server and then connect to it with the client.
 
@@ -48,7 +49,39 @@ lease some memory from the server
     >Data get for lease 123: this is some text
 
 # More Details
-Similar in nature to memchache, MemoryLease enables leased remote access to the memory on a computer.  It provides methods to get and set that memory by a lease id. It implements a single threaded TcpServer, TcpClient, and Buddy Memory Allocator. https://en.wikipedia.org/wiki/Buddy_memory_allocation The Buddy Memory Allocator is used to decrease fragmentation over time by providing a simple mechanism for coalescing freed memory. 
+Similar in nature to memchache, MemoryLease enables leased remote access to the memory on a computer.  It provides methods to get and set that memory by a lease id. It implements a single threaded TcpServer or TcpClient, and a Buddy Memory Allocator. 
+
+## TcpServer and TcpClient
+
+The server and the client communicate via a binary protocol that contains 5 different types of messages.
+
+*  Lease: Request a lease of a size for a duration
+*  Leased: A lease has been requested and was provided or not
+*  DataSetMessage: set the contents of a lease in memory
+*  AccessDataMessage: get the contents of the leased memory
+*  DataSetMessage: confirm or provide error information on if data was set
+
+These messages are covered into binary form and sent across the TCP socket.
+
+## Buddy Memory Allocator
+
+The Buddy Memory Allocator is used to decrease fragmentation over time by providing a simple mechanism for coalescing freed memory. The Buddy Memory allocator reduces the speed and overhead required to re-combine contiguous blocks of memory by always ensuring that each child is half the memory of it's parent. This implementation uses a triply linked tree structure. Because of this if at any point both children are free the parent can be combined without having to compare entries in a free list, or attempt more complicated methods of defragmentation. 
+
+However the allocator can still be sub-optimal when it comes to internal fragmentation and other strategies may be more beneficial in areas where you wish to trade speed for fast defragmentation.
+
+### Allocating memory
+
+When memory is requested, the allocator travels the tree to find the best fitting available node. It will then split that node in in half until it reaches a minimum size or the same size as the request rounded up to the nearest power of two. As it does so it creates smaller free blocks of available memory that can be used by others.  
+
+When it has created a node that is similar in size, it marks it as allocated and returns it for use.
+
+### Freeing memory
+When memory is released back to the system, we traverse the link to that node's parent. If both of it's children's memory is available those children are removed and the combined block can now be accessed. This process is continued recursively until we find a parent that still has an allocated child.
+
+### More info about Buddy Memory Allocation
+https://en.wikipedia.org/wiki/Buddy_memory_allocation 
+
+# Other Considerations
 
 Because of the nature of this assignment 3rd party libraries where not used. However boost would likely have improved code functionality and performance with better TCP libraries and memory allocation algorithms.  
 

@@ -15,28 +15,34 @@
 #include <stdio.h>
 #include <cstring>
 
+//message use to confirm or deny a lease
 typedef struct LeasedMessage
 {
     int leaseId;
 }LeasedMessage_t;
 
 
+//message used to confirm or show error for data being set
 typedef struct DataSetMessage
 {
     int error;
 }DataSetMessage_t;
 
+//message used to request data for a given lease
 typedef struct AccessDataMessage
 {
     int leaseId;
 }AccessDataMessage_t;
 
+// message used to request a lease of a size and duration
 typedef struct LeaseMessage
 {
     int leaseSize;
     int leasedDuration;
 }LeaseMessage_t;
 
+//message with a binary block of data
+//for a given lease
 typedef struct DataMessage
 {
     int leaseId;
@@ -44,6 +50,7 @@ typedef struct DataMessage
     long bufferSize;
 }DataMessage_t;
 
+// a binary message that can be sent and read through the MemProtocol
 typedef struct PackedMessage
 {
     long messageSize;
@@ -94,6 +101,8 @@ typedef struct PackedMessage
         return buffer && Size()+ MESSAGE_OVERHEAD >= messageSize;
     }
 }PackedMessage_t;
+
+// an enum of messages types
 enum MessageType
 {
     Lease = 1, //request a lease
@@ -102,14 +111,21 @@ enum MessageType
     AccessData, //access the data
     DataSet, //data has been set
 };
+
+// this class contains factory methods
+// to convert needed info int a packed form that is easy
+// to write and read from a socket to structured data
+// that can be easily used by application logic
 class MemProtocol
 {
 public:
+
     static PackedMessage_t CreateLeaseMessage(int leaseSize,
                                               int leaseDuration);
-    
     static PackedMessage_t CreateLeasedMessage(int leaseId);
+    
     static PackedMessage_t CreateAccessDataMessage(int leaseId);
+    
     static PackedMessage_t CreateDataSetMessage(int error);
     
     static PackedMessage_t CreateDataMessage(const char * buffer,

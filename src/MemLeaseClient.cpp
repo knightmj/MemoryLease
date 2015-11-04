@@ -10,33 +10,49 @@
 #include "TcpClient.hpp"
 #include <errno.h>
 
-int main(int argc, const char * argv[]) {
-    TcpClient client;
+void print_usage_and_exit()
+{
+    printf("Usage: client host [port] [command] [leaseid|size] [duration|data]\n");
+    printf("\t host: host running the server. example: localhost\n");
+    printf("\t port: port the server is connect to. example: 412.\n");
+    printf("\t command: command to run.\n");
+    printf("\t\t lease: lease some some memmory (Note: set requires duration argument in MS)\n");
+    printf("\t\t get: get memory for the provided lease id\n");
+    printf("\t\t set: set memory for the provided lease id. (Note: set requires data argument)\n");
+    printf("\n\n");
+    printf("#example run:\n");
+    printf("#lease some memory from the server\n");
+    printf("client localhost 412 lease 1024 5000\n");
+    printf(">You have leased 1024 bytes for 5000 MS with id 123\n");
+    printf("client localhost set 123  \"this is some text\"\n");
+    printf(">Data set for lease 123\n");
+    printf("client localhost get 123\n");
+    printf(">Data get for lease 123: this is some text\n");
+    exit(0);
+}
+
+int main(int argc, const char * argv[]) 
+{
+    //the client we will user to talk to the server
+    TcpClient client; 
+
+    //the name of the host we will connect to
     const char * host;
+    //the port we will connect to
     int port;
+
+    //the command we will run
+    //can be lease,get or set
     const char * command;
+    //additional information needed for the command
     int value;
+
+    //raw data used for the command
     const char * data = NULL;
     
     if (argc < 5)
     {
-        printf("Usage: client host [port] [command] [leaseid|size] [duration|data]\n");
-        printf("\t host: host running the server. example: localhost\n");
-        printf("\t port: port the server is connect to. example: 412.\n");
-        printf("\t command: command to run.\n");
-        printf("\t\t lease: lease some some memmory (Note: set requires duration argument in MS)\n");
-        printf("\t\t get: get memory for the provided lease id\n");
-        printf("\t\t set: set memory for the provided lease id. (Note: set requires data argument)\n");
-        printf("\n\n");
-        printf("#example run:\n");
-        printf("#lease some memory from the server\n");
-        printf("client localhost 412 lease 1024 5000\n");
-        printf(">You have leased 1024 bytes for 5000 MS with id 123\n");
-        printf("client localhost set 123  \"this is some text\"\n");
-        printf(">Data set for lease 123\n");
-        printf("client localhost get 123\n");
-        printf(">Data get for lease 123: this is some text\n");
-        exit(0);
+        print_usage_and_exit();
     }
     
     //pull info from command line
@@ -47,6 +63,7 @@ int main(int argc, const char * argv[]) {
     if (argc > 5)
         data = argv[5];
     
+    //validate the command
     bool ok = strcmp("lease", command) == 0 || strcmp("get", command) == 0 || strcmp("set", command) == 0;
     if (!ok)
     {
@@ -54,6 +71,7 @@ int main(int argc, const char * argv[]) {
         exit(0);
     }
     
+    //start the server
     int err = client.Start(host, port);
     if (err <0)
     {
@@ -63,6 +81,9 @@ int main(int argc, const char * argv[]) {
             printf("Error connecting: %s (%d)\n",strerror(errno),errno);
         exit(err);
     }
+
+    //run the commands
+
     if (strcmp("lease", command) == 0)
     {
         int duration = atoi(data);
@@ -70,7 +91,7 @@ int main(int argc, const char * argv[]) {
         client.Write(lease);
         PackedMessage_t leasedMessage = client.ReadMessage();
         LeasedMessage_t lm =  MemProtocol::ReadLeasedMessage(leasedMessage);
-        if (lm.leaseId >0)
+        if (lm.leaseId > 0)
         {
             printf("You have leased %d bytes for %d MS with id %d\n",
                    value,

@@ -50,7 +50,7 @@ BuddyNode_t* FindBuddy(BuddyNode_t * cur, long size)
     //if it's the right size use it!
     else if (cur->size == size)
     {
-        //this works
+        //this fits
         cur->allocated = true;
         return cur;
     }
@@ -60,7 +60,7 @@ BuddyNode_t* FindBuddy(BuddyNode_t * cur, long size)
     {
         //we need to split!
         cur->left = new BuddyNode_t(cur->memory,cur->size/2,false,cur);
-        cur->right = new BuddyNode_t(cur->memory + cur->size/2,cur->size/2,false,cur);
+        cur->right = new BuddyNode_t(cur->memory + (cur->size/2),cur->size/2,false,cur);
         
         return FindBuddy(cur->left, size);
     }
@@ -120,7 +120,6 @@ int LeasedMemoryContainer::RequestLease(long size,
     long neededSize = RoundUpToPowerOfTwo(size);
     
     neededSize = max(32l,neededSize); //smallest block of memory is 32 bytes
-    
     BuddyNode_t * n =  FindBuddy(this->head, neededSize);
     
     //if we can not find a node then there is not enoug space
@@ -148,6 +147,7 @@ int LeasedMemoryContainer::SetMemory(char* mem,
     if (this->leaseLookup[leaseId].size < size)
         return -2;
     
+    ///copy the provided memory into place
     memcpy(this->leaseLookup[leaseId].node->memory, mem, size);
     return 0;
 }
@@ -156,6 +156,7 @@ int LeasedMemoryContainer::GetMemory(char** mem,
                                      long &size,
                                      int leaseId)
 {
+    //make sure to set the intial return values
     (*mem) = NULL;
     size = 0;
 
@@ -174,6 +175,7 @@ int LeasedMemoryContainer::CleanLeases()
     map<int,MemoryLease_t>::const_iterator it = this->leaseLookup.begin();
     vector<int> removedLeases;
     
+    //look for any leases that have expired and schedule them for removal
     while (it != this->leaseLookup.end())
     {
         time_t end = (it->second.start*1000) + it->second.duration;
@@ -193,5 +195,5 @@ int LeasedMemoryContainer::CleanLeases()
         map<int,MemoryLease_t>::iterator it = this->leaseLookup.find(lease);
         this->leaseLookup.erase(it);
     }
-    return -1;
+    return 0;
 }

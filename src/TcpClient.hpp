@@ -22,8 +22,18 @@
 class TcpClient
 {
 public:
+    //Connect to a TcpServer
+    //host: host to connect to example : localhost
+    //port: port that the socket is bound to
     int Start(const char * host, int port);
+
+    //this is a blocking call that will wait
+    //until an entire packed message has been read
+    //returns : the pakced message read
     PackedMessage_t ReadMessage();
+    
+    //write a packed message to the socket
+    //returns:  number of bytes written
     long Write(PackedMessage_t message);
 private:
     int _currentFileDescriptor;

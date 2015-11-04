@@ -15,24 +15,32 @@
 
 int main(int argc, const char * argv[])
 {
+    //check usage
     if (argc != 3)
     {
         printf("Usage: %s [port number] [max memory]\n",argv[0]);
         exit(0);
     }
     
+    // the port we wil beind to
     int port = atoi(argv[1]);
+
+    //the max ammount of memory to lease
     int memSize = atoi(argv[2]);
     
+    //the server we will create
     TcpServer server;
     printf("starting server on port %d\n",port);
-    
+
+    //start the server
     int err = server.Start(port);
     if (err<0)
     {
         printf("Error: Unable to start server. %s (%d)\n",strerror(errno),errno);
         exit(err);
     }
+
+    //create the lease container
     LeasedMemoryContainer container;
     
     container.CreateMemory(memSize);
@@ -46,6 +54,7 @@ int main(int argc, const char * argv[])
         PackedMessage_t* msg = server.ReadMessage();
         if (!msg)
             continue;
+
         //make sure the leases are up to date
         container.CleanLeases();
         

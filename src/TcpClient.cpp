@@ -23,8 +23,6 @@ PackedMessage_t TcpClient::ReadMessage()
 }
 long TcpClient::Write(PackedMessage_t message)
 {
-       printf("writing %ld bytes\n",message.messageSize );
-
     return write(_currentFileDescriptor,message.buffer,message.messageSize);
 }
 int TcpClient::Start(const char* host, int port)
